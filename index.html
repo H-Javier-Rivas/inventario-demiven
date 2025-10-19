@@ -9,7 +9,7 @@
     <style>
         :root {
             --primary-color: #1e3a8a; /* Azul oscuro */
-            --secondary-color: #f59e0b; /* ¡mbar/Oro */
+            --secondary-color: #f59e0b; /* √Åmbar/Oro */
             --background-color: #f1f5f9; /* Gris claro */
             --card-background: #ffffff;
             --text-dark: #1e293b;
@@ -42,7 +42,7 @@
         .modal {
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
-        /* AnimaciÛn para el Toast */
+        /* Animaci√≥n para el Toast */
         @keyframes fadeInOut {
             0%, 100% { opacity: 0; transform: translateY(20px); }
             10%, 90% { opacity: 1; transform: translateY(0); }
@@ -92,7 +92,7 @@
                         </tr>
                     </thead>
                     <tbody id="inventory-table-body">
-                        <!-- Filas de inventario se insertar·n aquÌ din·micamente -->
+                        <!-- Filas de inventario se insertar√°n aqu√≠ din√°micamente -->
                     </tbody>
                 </table>
                  <div id="empty-state" class="hidden text-center p-12">
@@ -104,7 +104,7 @@
         </main>
     </div>
 
-    <!-- Modal para AÒadir/Editar Õtem -->
+    <!-- Modal para A√±adir/Editar √çtem -->
     <div id="item-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md modal" id="item-modal-content">
             <form id="item-form" class="p-6">
@@ -225,11 +225,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- ESTADO DE LA APLICACI”N ---
+            // --- ESTADO DE LA APLICACI√ìN ---
             // Cargar desde localStorage o usar la variable `initialDepartmentInventory` del archivo `inventario_data.js`
             let inventory = JSON.parse(localStorage.getItem('demivenInventory')) || initialDepartmentInventory;
 
-            // --- INICIALIZACI”N DE ICONOS (SOLUCI”N AL ERROR) ---
+            // --- INICIALIZACI√ìN DE ICONOS (SOLUCI√ìN AL ERROR) ---
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
@@ -368,7 +368,7 @@
             };
             const closeExportModal = () => exportModal.classList.add('hidden');
 
-            // --- L”GICA DE EVENTOS ---
+            // --- L√ìGICA DE EVENTOS ---
             addNewItemBtn.addEventListener('click', () => openItemModal());
             cancelItemBtn.addEventListener('click', closeItemModal);
             itemModal.addEventListener('click', (e) => { if(e.target === itemModal) closeItemModal(); });
@@ -383,7 +383,7 @@
             copyExportBtn.addEventListener('click', () => {
                 exportDataTextarea.select();
                 document.execCommand('copy');
-                showToast('°Datos copiados al portapapeles!');
+                showToast('¬°Datos copiados al portapapeles!');
                 closeExportModal();
             });
 
@@ -432,7 +432,7 @@
                 }
                 
                 if (button.classList.contains('btn-eliminar')) {
-                    if (confirm('øEst\u00e1 seguro de que desea eliminar este \u00edtem del inventario? Esta acci\u00f3n no se puede deshacer.')) {
+                    if (confirm('¬øEst\u00e1 seguro de que desea eliminar este \u00edtem del inventario? Esta acci\u00f3n no se puede deshacer.')) {
                         inventory = inventory.filter(i => i.id !== id);
                         saveInventory();
                         renderInventory();
@@ -478,10 +478,11 @@
                 closeTransactionModal();
             });
 
-            // --- INICIALIZACI”N DE LA VISTA ---
+            // --- INICIALIZACI√ìN DE LA VISTA ---
             renderInventory();
         });
     </script>
 </body>
 </html>
+
 
