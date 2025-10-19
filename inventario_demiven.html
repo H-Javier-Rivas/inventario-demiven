@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - CORPORACI&Oacute;N DEMIVEN 2020, C.A.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide-static@latest/dist/lucide.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e3a8a; /* Azul oscuro */
+            --secondary-color: #f59e0b; /* Ámbar/Oro */
+            --background-color: #f1f5f9; /* Gris claro */
+            --card-background: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+        }
+        body {
+            background-color: var(--background-color);
+            color: var(--text-dark);
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            transition: background-color: 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #1c347d;
+        }
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+            transition: background-color: 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: #d97706;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        /* Animación para el Toast */
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(20px); }
+            10%, 90% { opacity: 1; transform: translateY(0); }
+        }
+        .toast-notification {
+            animation: fadeInOut 4s ease-in-out forwards;
+        }
+    </style>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Encabezado -->
+        <header class="mb-8 p-4 bg-white rounded-lg shadow-md flex flex-wrap justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">CORPORACI&Oacute;N DEMIVEN 2020, C.A.</h1>
+                <p class="text-sm text-gray-500">Sistema de Control de Inventario y Almac&eacute;n</p>
+            </div>
+            <div class="flex items-center gap-2">
+                 <button id="exportDataBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                    <span class="hidden md:inline">Exportar</span>
+                </button>
+                <button id="addNewItemBtn" class="btn-primary font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    <span class="hidden md:inline">Nuevo &Iacute;tem</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenido Principal: Inventario -->
+        <main id="inventory-view" class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-4 border-b">
+                <h2 class="text-xl font-bold">Inventario de Almac&eacute;n</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">C&oacute;digo</th>
+                            <th scope="col" class="px-6 py-3">Descripci&oacute;n</th>
+                            <th scope="col" class="px-6 py-3 text-center">Stock Actual</th>
+                            <th scope="col" class="px-6 py-3">Unidad</th>
+                            <th scope="col" class="px-6 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-table-body">
+                        <!-- Filas de inventario se insertarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+                 <div id="empty-state" class="hidden text-center p-12">
+                    <i data-lucide="archive" class="w-16 h-16 mx-auto text-gray-300"></i>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-700">El inventario est&aacute; vac&iacute;o</h3>
+                    <p class="mt-1 text-sm text-gray-500">Comienza agregando un nuevo &iacute;tem al almac&eacute;n.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para Añadir/Editar Ítem -->
+    <div id="item-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md modal" id="item-modal-content">
+            <form id="item-form" class="p-6">
+                <input type="hidden" id="item-id">
+                <h2 id="modal-title" class="text-2xl font-bold mb-4">A&ntilde;adir Nuevo &Iacute;tem</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="item-code" class="block text-sm font-medium text-gray-700">C&oacute;digo</label>
+                        <input type="text" id="item-code" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                    </div>
+                     <div>
+                        <label for="item-unit" class="block text-sm font-medium text-gray-700">Unidad de Medida</label>
+                        <input type="text" id="item-unit" placeholder="Ej: Pza, Kg, Lt, M" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="item-description" class="block text-sm font-medium text-gray-700">Descripci&oacute;n</label>
+                    <textarea id="item-description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="item-quantity" class="block text-sm font-medium text-gray-700">Cantidad Inicial</label>
+                        <input type="number" id="item-quantity" min="0" step="any" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                    </div>
+                    <div>
+                        <label for="item-reorder-point" class="block text-sm font-medium text-gray-700">Punto de Reorden</label>
+                        <input type="number" id="item-reorder-point" min="0" step="any" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" id="cancel-item-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                    <button type="submit" class="btn-primary font-bold py-2 px-4 rounded-lg">Guardar &Iacute;tem</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Entradas/Salidas -->
+    <div id="transaction-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md modal" id="transaction-modal-content">
+            <form id="transaction-form" class="p-6">
+                <input type="hidden" id="transaction-item-id">
+                <input type="hidden" id="transaction-type">
+                <h2 id="transaction-modal-title" class="text-2xl font-bold mb-2"></h2>
+                <p class="mb-4 text-gray-600" id="transaction-item-name"></p>
+
+                <div class="mb-4">
+                    <label for="transaction-quantity" class="block text-sm font-medium text-gray-700">Cantidad</label>
+                    <input type="number" id="transaction-quantity" min="0.01" step="any" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                </div>
+                
+                <div id="transaction-fields-salida" class="hidden space-y-4">
+                     <div>
+                        <label for="transaction-requester" class="block text-sm font-medium text-gray-700">Solicitante</label>
+                        <input type="text" id="transaction-requester" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="transaction-department" class="block text-sm font-medium text-gray-700">Departamento/Frente</label>
+                        <input type="text" id="transaction-department" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+                
+                <div id="transaction-fields-entrada" class="hidden">
+                    <div>
+                        <label for="transaction-reference" class="block text-sm font-medium text-gray-700">Referencia (N&deg; Factura/Gu&iacute;a)</label>
+                        <input type="text" id="transaction-reference" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <div class="mt-6 mb-4">
+                    <label for="transaction-approver" class="block text-sm font-medium text-gray-700">Autorizado por</label>
+                    <input type="text" id="transaction-approver" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancel-transaction-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                    <button type="submit" class="font-bold py-2 px-4 rounded-lg" id="confirm-transaction-btn">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para Exportar Datos -->
+    <div id="export-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl modal" id="export-modal-content">
+            <div class="p-6">
+                 <h2 class="text-2xl font-bold mb-4">Exportar Datos del Inventario</h2>
+                 <p class="text-sm text-gray-600 mb-4">
+                    Para actualizar el archivo de datos inicial, sigue estos pasos:<br>
+                    1. Haz clic en "Copiar".<br>
+                    2. Abre el archivo <strong>inventario_data.js</strong> en un editor de texto.<br>
+                    3. Borra todo el contenido y pega estos nuevos datos. Guarda el archivo.
+                 </p>
+                 <textarea id="export-data-textarea" readonly class="w-full h-64 p-2 border rounded-md font-mono text-xs bg-gray-50"></textarea>
+                 <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" id="cancel-export-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg">Cerrar</button>
+                    <button type="button" id="copy-export-btn" class="btn-primary font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                        <i data-lucide="clipboard-copy" class="w-5 h-5"></i>
+                        Copiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white py-2 px-5 rounded-lg shadow-lg hidden toast-notification">
+        <p id="toast-message"></p>
+    </div>
+
+    <!-- Cargar los datos del inventario antes que el script principal -->
+    <script src="inventario_data.js" defer></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- ESTADO DE LA APLICACIÓN ---
+            // Cargar desde localStorage o usar la variable `initialDepartmentInventory` del archivo `inventario_data.js`
+            let inventory = JSON.parse(localStorage.getItem('demivenInventory')) || initialDepartmentInventory;
+
+            // --- INICIALIZACIÓN DE ICONOS (SOLUCIÓN AL ERROR) ---
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // --- REFERENCIAS AL DOM ---
+            const addNewItemBtn = document.getElementById('addNewItemBtn');
+            const itemModal = document.getElementById('item-modal');
+            const itemForm = document.getElementById('item-form');
+            const cancelItemBtn = document.getElementById('cancel-item-btn');
+            const modalTitle = document.getElementById('modal-title');
+            const inventoryTableBody = document.getElementById('inventory-table-body');
+            const emptyState = document.getElementById('empty-state');
+            
+            const transactionModal = document.getElementById('transaction-modal');
+            const transactionForm = document.getElementById('transaction-form');
+            const cancelTransactionBtn = document.getElementById('cancel-transaction-btn');
+            const transactionModalTitle = document.getElementById('transaction-modal-title');
+            const transactionItemName = document.getElementById('transaction-item-name');
+            const confirmTransactionBtn = document.getElementById('confirm-transaction-btn');
+            const transactionFieldsSalida = document.getElementById('transaction-fields-salida');
+            const transactionFieldsEntrada = document.getElementById('transaction-fields-entrada');
+            
+            const exportDataBtn = document.getElementById('exportDataBtn');
+            const exportModal = document.getElementById('export-modal');
+            const cancelExportBtn = document.getElementById('cancel-export-btn');
+            const copyExportBtn = document.getElementById('copy-export-btn');
+            const exportDataTextarea = document.getElementById('export-data-textarea');
+            
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+
+            // --- FUNCIONES ---
+            const saveInventory = () => {
+                localStorage.setItem('demivenInventory', JSON.stringify(inventory));
+            };
+            
+            const showToast = (message, isError = false) => {
+                toastMessage.innerHTML = message; // Usar innerHTML para renderizar entidades
+                toast.classList.remove('hidden');
+                toast.classList.toggle('bg-red-600', isError);
+                toast.classList.toggle('bg-gray-800', !isError);
+                
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 4000);
+            };
+
+            const renderInventory = () => {
+                inventoryTableBody.innerHTML = '';
+                if (inventory.length === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+
+                inventory.sort((a, b) => a.code.localeCompare(b.code)).forEach(item => {
+                    const lowStock = item.reorderPoint && item.quantity <= item.reorderPoint;
+                    const row = document.createElement('tr');
+                    row.className = `bg-white border-b ${lowStock ? 'bg-amber-50' : ''}`;
+                    row.innerHTML = `
+                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${item.code}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-semibold">${item.description}</div>
+                            ${lowStock ? `<div class="text-xs text-red-600 font-bold">STOCK BAJO</div>` : ''}
+                        </td>
+                        <td class="px-6 py-4 text-center font-mono text-lg">${parseFloat(item.quantity).toLocaleString('es-VE')}</td>
+                        <td class="px-6 py-4">${item.unit}</td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex justify-center items-center gap-2">
+                                <button data-id="${item.id}" class="btn-entrada bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded-md text-xs">Entrada</button>
+                                <button data-id="${item.id}" class="btn-salida bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md text-xs">Salida</button>
+                                <button data-id="${item.id}" class="btn-editar text-blue-600 hover:text-blue-800 p-1"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                <button data-id="${item.id}" class="btn-eliminar text-gray-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </td>
+                    `;
+                    inventoryTableBody.appendChild(row);
+                });
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            };
+
+            // --- MANEJO DE MODALES ---
+            const openItemModal = (item = null) => {
+                itemForm.reset();
+                if (item) {
+                    modalTitle.innerHTML = 'Editar &Iacute;tem';
+                    document.getElementById('item-id').value = item.id;
+                    document.getElementById('item-code').value = item.code;
+                    document.getElementById('item-description').value = item.description;
+                    document.getElementById('item-quantity').value = item.quantity;
+                    document.getElementById('item-quantity').disabled = true;
+                    document.getElementById('item-unit').value = item.unit;
+                    document.getElementById('item-reorder-point').value = item.reorderPoint || '';
+                } else {
+                    modalTitle.innerHTML = 'A&ntilde;adir Nuevo &Iacute;tem';
+                    document.getElementById('item-id').value = '';
+                    document.getElementById('item-quantity').disabled = false;
+                }
+                itemModal.classList.remove('hidden');
+            };
+            const closeItemModal = () => itemModal.classList.add('hidden');
+            
+            const openTransactionModal = (itemId, type) => {
+                const item = inventory.find(i => i.id === itemId);
+                if (!item) return;
+
+                transactionForm.reset();
+                document.getElementById('transaction-item-id').value = item.id;
+                document.getElementById('transaction-type').value = type;
+                transactionItemName.textContent = `${item.code} - ${item.description}`;
+                
+                if (type === 'entrada') {
+                    transactionModalTitle.textContent = 'Registrar Entrada de Material';
+                    confirmTransactionBtn.className = 'btn-primary font-bold py-2 px-4 rounded-lg';
+                    confirmTransactionBtn.textContent = 'Registrar Entrada';
+                    transactionFieldsEntrada.classList.remove('hidden');
+                    transactionFieldsSalida.classList.add('hidden');
+                } else { // salida
+                    transactionModalTitle.textContent = 'Generar Nota de Entrega (Salida)';
+                    confirmTransactionBtn.className = 'btn-secondary font-bold py-2 px-4 rounded-lg';
+                    confirmTransactionBtn.textContent = 'Confirmar Salida';
+                    transactionFieldsSalida.classList.remove('hidden');
+                    transactionFieldsEntrada.classList.add('hidden');
+                    document.getElementById('transaction-quantity').max = item.quantity;
+                }
+                transactionModal.classList.remove('hidden');
+            };
+            const closeTransactionModal = () => transactionModal.classList.add('hidden');
+
+            const openExportModal = () => {
+                const dataString = `const initialDepartmentInventory = ${JSON.stringify(inventory, null, 2)};`;
+                exportDataTextarea.value = dataString;
+                exportModal.classList.remove('hidden');
+            };
+            const closeExportModal = () => exportModal.classList.add('hidden');
+
+            // --- LÓGICA DE EVENTOS ---
+            addNewItemBtn.addEventListener('click', () => openItemModal());
+            cancelItemBtn.addEventListener('click', closeItemModal);
+            itemModal.addEventListener('click', (e) => { if(e.target === itemModal) closeItemModal(); });
+            
+            cancelTransactionBtn.addEventListener('click', closeTransactionModal);
+            transactionModal.addEventListener('click', (e) => { if(e.target === transactionModal) closeTransactionModal(); });
+
+            exportDataBtn.addEventListener('click', openExportModal);
+            cancelExportBtn.addEventListener('click', closeExportModal);
+            exportModal.addEventListener('click', (e) => { if(e.target === exportModal) closeExportModal(); });
+
+            copyExportBtn.addEventListener('click', () => {
+                exportDataTextarea.select();
+                document.execCommand('copy');
+                showToast('¡Datos copiados al portapapeles!');
+                closeExportModal();
+            });
+
+            itemForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const id = document.getElementById('item-id').value;
+                const code = document.getElementById('item-code').value.toUpperCase();
+                
+                const existingItem = inventory.find(item => item.code === code && item.id !== id);
+                if (existingItem) {
+                    showToast('El c&oacute;digo de &iacute;tem ya existe.', true);
+                    return;
+                }
+
+                if (id) { // Editando
+                    const item = inventory.find(i => i.id === id);
+                    item.code = code;
+                    item.description = document.getElementById('item-description').value;
+                    item.unit = document.getElementById('item-unit').value;
+                    item.reorderPoint = parseFloat(document.getElementById('item-reorder-point').value) || 0;
+                    showToast('&Iacute;tem actualizado correctamente.');
+                } else { // Creando
+                    const newItem = {
+                        id: `ITEM-${Date.now()}`,
+                        code: code,
+                        description: document.getElementById('item-description').value,
+                        quantity: parseFloat(document.getElementById('item-quantity').value) || 0,
+                        unit: document.getElementById('item-unit').value,
+                        reorderPoint: parseFloat(document.getElementById('item-reorder-point').value) || 0,
+                    };
+                    inventory.push(newItem);
+                    showToast('Nuevo &iacute;tem agregado al inventario.');
+                }
+                saveInventory();
+                renderInventory();
+                closeItemModal();
+            });
+
+            inventoryTableBody.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (!button) return;
+                const id = button.dataset.id;
+                
+                if (button.classList.contains('btn-editar')) {
+                    openItemModal(inventory.find(i => i.id === id));
+                }
+                
+                if (button.classList.contains('btn-eliminar')) {
+                    if (confirm('¿Est\u00e1 seguro de que desea eliminar este \u00edtem del inventario? Esta acci\u00f3n no se puede deshacer.')) {
+                        inventory = inventory.filter(i => i.id !== id);
+                        saveInventory();
+                        renderInventory();
+                        showToast('&Iacute;tem eliminado.', true);
+                    }
+                }
+                
+                if (button.classList.contains('btn-entrada')) {
+                    openTransactionModal(id, 'entrada');
+                }
+                
+                if (button.classList.contains('btn-salida')) {
+                    openTransactionModal(id, 'salida');
+                }
+            });
+            
+            transactionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const id = document.getElementById('transaction-item-id').value;
+                const type = document.getElementById('transaction-type').value;
+                const quantity = parseFloat(document.getElementById('transaction-quantity').value);
+                const item = inventory.find(i => i.id === id);
+
+                if (!item || isNaN(quantity) || quantity <= 0) {
+                    showToast('Datos inv&aacute;lidos.', true);
+                    return;
+                }
+                
+                if (type === 'salida') {
+                    if (quantity > item.quantity) {
+                        showToast(`No hay stock suficiente. Disponible: ${item.quantity}`, true);
+                        return;
+                    }
+                    item.quantity -= quantity;
+                    showToast('Salida de material registrada.');
+                } else { // entrada
+                    item.quantity += quantity;
+                    showToast('Entrada de material registrada.');
+                }
+                
+                saveInventory();
+                renderInventory();
+                closeTransactionModal();
+            });
+
+            // --- INICIALIZACIÓN DE LA VISTA ---
+            renderInventory();
+        });
+    </script>
+</body>
+</html>
+
