@@ -267,7 +267,7 @@
             };
             
             const showToast = (message, isError = false) => {
-                toastMessage.innerHTML = message; // Usar innerHTML para renderizar entidades
+                toastMessage.innerHTML = message; 
                 toast.classList.remove('hidden');
                 toast.classList.toggle('bg-red-600', isError);
                 toast.classList.toggle('bg-gray-800', !isError);
@@ -362,7 +362,16 @@
             const closeTransactionModal = () => transactionModal.classList.add('hidden');
 
             const openExportModal = () => {
-                const dataString = `const initialDepartmentInventory = ${JSON.stringify(inventory, null, 2)};`;
+                // Filtra para solo incluir las propiedades necesarias en el archivo de datos inicial
+                const exportableInventory = inventory.map(({ id, code, description, quantity, unit, reorderPoint }) => ({
+                    id,
+                    code,
+                    description,
+                    quantity,
+                    unit,
+                    reorderPoint
+                }));
+                const dataString = `const initialDepartmentInventory = ${JSON.stringify(exportableInventory, null, 2)};`;
                 exportDataTextarea.value = dataString;
                 exportModal.classList.remove('hidden');
             };
@@ -432,11 +441,13 @@
                 }
                 
                 if (button.classList.contains('btn-eliminar')) {
-                    if (confirm('¿Est\u00e1 seguro de que desea eliminar este \u00edtem del inventario? Esta acci\u00f3n no se puede deshacer.')) {
+                    // Lógica de ELIMINAR con confirmación
+                    const item = inventory.find(i => i.id === id);
+                    if (confirm(`¿Est\u00e1 seguro de que desea eliminar permanentemente el \u00edtem: ${item.code} - ${item.description}?`)) {
                         inventory = inventory.filter(i => i.id !== id);
                         saveInventory();
                         renderInventory();
-                        showToast('&Iacute;tem eliminado.', true);
+                        showToast('&Iacute;tem eliminado permanentemente.', true);
                     }
                 }
                 
@@ -484,5 +495,3 @@
     </script>
 </body>
 </html>
-
-
