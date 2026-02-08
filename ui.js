@@ -39,6 +39,7 @@
                 const sidebar = document.getElementById('actionSidebar');
                 if (show) {
                     sidebar.classList.remove('hidden');
+                    setTimeout(() => lucide.createIcons(), 10);
                 } else {
                     sidebar.classList.add('hidden');
                     State.selectedId = null;
