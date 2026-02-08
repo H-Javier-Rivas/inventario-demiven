@@ -3,418 +3,404 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario - CORPORACI&Oacute;N DEMIVEN 2020, C.A.</title>
+    <title>Inventario Pro - CORPORACI&Oacute;N DEMIVEN 2020, C.A.</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide-static@latest/dist/lucide.min.js"></script>
     <style>
+        @import url('https://rsms.me/inter/inter.css');
         :root {
-            --primary-color: #1e3a8a; /* Azul oscuro */
-            --secondary-color: #f59e0b; /* Ámbar/Oro */
-            --background-color: #f1f5f9; /* Gris claro */
-            --card-background: #ffffff;
-            --text-dark: #1e293b;
-            --text-light: #64748b;
+            --primary: #1e3a8a;
+            --secondary: #f59e0b;
+            --bg: #f8fafc;
         }
         body {
-            background-color: var(--background-color);
-            color: var(--text-dark);
+            background-color: var(--bg);
             font-family: 'Inter', sans-serif;
         }
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-            transition: background-color 0.3s;
+        .selected-row {
+            background-color: #eff6ff !important;
+            border-left: 4px solid var(--primary);
         }
-        .btn-primary:hover {
-            background-color: #1c347d;
+        .action-sidebar {
+            transition: transform 0.3s ease-in-out;
         }
-        .btn-secondary {
-            background-color: var(--secondary-color);
-            color: white;
-            transition: background-color 0.3s ease;
-        }
-        .btn-secondary:hover {
-            background-color: #d97706;
-        }
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        .modal {
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0; transform: translateY(20px); }
-            10%, 90% { opacity: 1; transform: translateY(0); }
-        }
-        .toast-notification {
-            animation: fadeInOut 4s ease-in-out forwards;
+        .action-sidebar.hidden-sidebar {
+            transform: translateX(100%);
         }
     </style>
-    <link rel="preconnect" href="https://rsms.me/">
-    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 </head>
-<body class="p-4 md:p-8">
+<body class="antialiased text-slate-900">
 
-    <div class="max-w-7xl mx-auto">
-        <!-- Encabezado -->
-        <header class="mb-8 p-4 bg-white rounded-lg shadow-md flex flex-wrap justify-between items-center gap-4">
-            <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">CORPORACI&Oacute;N DEMIVEN 2020, C.A.</h1>
-                <p class="text-sm text-gray-500">Sistema de Control de Inventario y Almac&eacute;n</p>
-            </div>
-            <div class="flex items-center gap-2">
-                 <button id="exportDataBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-                    <i data-lucide="download" class="w-5 h-5"></i>
-                    <span class="hidden md:inline">Exportar</span>
-                </button>
-                <button id="addNewItemBtn" class="btn-primary font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    <span class="hidden md:inline">Nuevo &Iacute;tem</span>
-                </button>
-            </div>
-        </header>
-
-        <!-- Contenido Principal: Inventario -->
-        <main id="inventory-view" class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="p-4 border-b">
-                <h2 class="text-xl font-bold">Inventario de Almac&eacute;n</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">C&oacute;digo</th>
-                            <th scope="col" class="px-6 py-3">Descripci&oacute;n</th>
-                            <th scope="col" class="px-6 py-3 text-center">Stock Actual</th>
-                            <th scope="col" class="px-6 py-3">Unidad</th>
-                            <th scope="col" class="px-6 py-3 text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-table-body">
-                        <!-- Filas de inventario se insertarán aquí dinámicamente -->
-                    </tbody>
-                </table>
-                 <div id="empty-state" class="hidden text-center p-12">
-                    <i data-lucide="archive" class="w-16 h-16 mx-auto text-gray-300"></i>
-                    <h3 class="mt-4 text-lg font-semibold text-gray-700">El inventario est&aacute; vac&iacute;o</h3>
-                    <p class="mt-1 text-sm text-gray-500">Comienza agregando un nuevo &iacute;tem al almac&eacute;n.</p>
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            
+            <!-- HEADER -->
+            <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">DEMIVEN 2020</h1>
+                    <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Gestión de Almacén</p>
                 </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Modal para Añadir/Editar Ítem -->
-    <div id="item-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md modal" id="item-modal-content">
-            <form id="item-form" class="p-6">
-                <input type="hidden" id="item-id">
-                <h2 id="modal-title" class="text-2xl font-bold mb-4">A&ntilde;adir Nuevo &Iacute;tem</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="item-code" class="block text-sm font-medium text-gray-700">C&oacute;digo</label>
-                        <input type="text" id="item-code" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                    </div>
-                     <div>
-                        <label for="item-unit" class="block text-sm font-medium text-gray-700">Unidad de Medida</label>
-                        <input type="text" id="item-unit" placeholder="Ej: Pza, Kg, Lt, M" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label for="item-description" class="block text-sm font-medium text-gray-700">Descripci&oacute;n</label>
-                    <textarea id="item-description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required></textarea>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label for="item-quantity" class="block text-sm font-medium text-gray-700">Cantidad Inicial</label>
-                        <input type="number" id="item-quantity" min="0" step="any" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                    </div>
-                    <div>
-                        <label for="item-reorder-point" class="block text-sm font-medium text-gray-700">Punto de Reorden</label>
-                        <input type="number" id="item-reorder-point" min="0" step="any" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3">
-                    <button type="button" id="cancel-item-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg">Cancelar</button>
-                    <button type="submit" class="btn-primary font-bold py-2 px-4 rounded-lg">Guardar &Iacute;tem</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal para Entradas/Salidas -->
-    <div id="transaction-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md modal" id="transaction-modal-content">
-            <form id="transaction-form" class="p-6">
-                <input type="hidden" id="transaction-item-id">
-                <input type="hidden" id="transaction-type">
-                <h2 id="transaction-modal-title" class="text-2xl font-bold mb-2"></h2>
-                <p class="mb-4 text-gray-600" id="transaction-item-name"></p>
-
-                <div class="mb-4">
-                    <label for="transaction-quantity" class="block text-sm font-medium text-gray-700">Cantidad</label>
-                    <input type="number" id="transaction-quantity" min="0.01" step="any" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                </div>
-                
-                <div id="transaction-fields-salida" class="hidden space-y-4">
-                     <div>
-                        <label for="transaction-requester" class="block text-sm font-medium text-gray-700">Solicitante</label>
-                        <input type="text" id="transaction-requester" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="transaction-department" class="block text-sm font-medium text-gray-700">Departamento/Frente</label>
-                        <input type="text" id="transaction-department" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                </div>
-                
-                <div id="transaction-fields-entrada" class="hidden">
-                    <div>
-                        <label for="transaction-reference" class="block text-sm font-medium text-gray-700">Referencia (N&deg; Factura/Gu&iacute;a)</label>
-                        <input type="text" id="transaction-reference" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                </div>
-
-                <div class="mt-6 mb-4">
-                    <label for="transaction-approver" class="block text-sm font-medium text-gray-700">Autorizado por</label>
-                    <input type="text" id="transaction-approver" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                </div>
-
-                <div class="flex justify-end gap-3 mt-6">
-                    <button type="button" id="cancel-transaction-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg">Cancelar</button>
-                    <button type="submit" class="font-bold py-2 px-4 rounded-lg" id="confirm-transaction-btn">Confirmar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Modal para Exportar Datos -->
-    <div id="export-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl modal" id="export-modal-content">
-            <div class="p-6">
-                 <h2 class="text-2xl font-bold mb-4">Exportar Datos del Inventario</h2>
-                 <p class="text-sm text-gray-600 mb-4">
-                    Para actualizar el archivo de datos inicial, sigue estos pasos:<br>
-                    1. Haz clic en "Copiar".<br>
-                    2. Abre el archivo <strong>inventario_data.js</strong> en un editor de texto.<br>
-                    3. Borra todo el contenido y pega estos nuevos datos. Guarda el archivo.
-                 </p>
-                 <textarea id="export-data-textarea" readonly class="w-full h-64 p-2 border rounded-md font-mono text-xs bg-gray-50"></textarea>
-                 <div class="flex justify-end gap-3 mt-4">
-                    <button type="button" id="cancel-export-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg">Cerrar</button>
-                    <button type="button" id="copy-export-btn" class="btn-primary font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-                        <i data-lucide="clipboard-copy" class="w-5 h-5"></i>
-                        Copiar
+                <div class="flex gap-2">
+                    <button id="exportBtn" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" title="Exportar Datos">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </button>
+                    <button id="addNewBtn" class="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Nuevo Producto
                     </button>
                 </div>
+            </header>
+
+            <!-- TABLA DE INVENTARIO -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <span class="text-sm font-medium text-slate-600">Catálogo de Productos</span>
+                        <div class="text-xs text-slate-400">Haz clic en una fila para gestionar</div>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-slate-400 text-[11px] uppercase tracking-widest border-b border-slate-100">
+                                <th class="px-6 py-4 font-bold">Código</th>
+                                <th class="px-6 py-4 font-bold">Descripción</th>
+                                <th class="px-6 py-4 font-bold text-right">Existencia</th>
+                                <th class="px-6 py-4 font-bold">Unidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody" class="divide-y divide-slate-50">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                    <div id="emptyState" class="hidden py-20 text-center">
+                        <i data-lucide="package-search" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+                        <p class="text-slate-500">No hay productos registrados</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- PANEL DE ACCIONES LATERAL (CONTEXTUAL) -->
+        <aside id="actionSidebar" class="w-80 bg-white border-l border-slate-200 shadow-2xl flex flex-col hidden">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h2 class="font-bold text-slate-800">Acciones</h2>
+                <button id="closeSidebar" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 flex-1 overflow-y-auto space-y-8">
+                <!-- Info del Producto Seleccionado -->
+                <div id="selectedInfo">
+                    <div class="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">Producto Seleccionado</div>
+                    <div id="sideCode" class="text-lg font-bold text-slate-900 leading-tight">--</div>
+                    <div id="sideDesc" class="text-sm text-slate-500 mt-1">--</div>
+                </div>
+
+                <!-- Menú de Botones -->
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="handleAction('entrada')" class="w-full flex items-center gap-3 p-3 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors font-semibold text-sm border border-green-200">
+                        <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+                        Registrar Entrada
+                    </button>
+                    <button onclick="handleAction('salida')" class="w-full flex items-center gap-3 p-3 bg-orange-50 text-orange-700 rounded-xl hover:bg-orange-100 transition-colors font-semibold text-sm border border-orange-200">
+                        <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+                        Registrar Salida
+                    </button>
+                    <div class="pt-4 border-t border-slate-100 mt-4 space-y-2">
+                        <button onclick="handleAction('edit')" class="w-full flex items-center gap-3 p-3 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-sm border border-slate-100">
+                            <i data-lucide="pencil" class="w-4 h-4 text-slate-400"></i>
+                            Editar Detalles
+                        </button>
+                        <button onclick="handleAction('delete')" class="w-full flex items-center gap-3 p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors text-sm border border-transparent">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            Eliminar del Sistema
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- MODAL ÚNICO PARA FORMULARIOS (Manejado dinámicamente) -->
+    <div id="globalModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div id="modalContent" class="p-8">
+                <!-- El contenido se inyecta vía JS según la acción -->
             </div>
         </div>
     </div>
-    
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white py-2 px-5 rounded-lg shadow-lg hidden toast-notification">
-        <p id="toast-message"></p>
-    </div>
 
-    <!-- Datos iniciales -->
-    <script src="inventario_data.js" defer></script>
-
+    <script src="inventario_data.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Cargar desde localStorage o datos iniciales
-            let inventory = JSON.parse(localStorage.getItem('demivenInventory')) || (typeof initialDepartmentInventory !== 'undefined' ? initialDepartmentInventory : []);
+        /** * MÓDULO: ESTADO (STATE MANAGEMENT)
+         * En una app profesional esto iría en 'state.js'
+         */
+        const State = {
+            inventory: JSON.parse(localStorage.getItem('demivenInventory')) || initialDepartmentInventory || [],
+            selectedId: null,
 
-            const inventoryTableBody = document.getElementById('inventory-table-body');
-            const emptyState = document.getElementById('empty-state');
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
+            save() {
+                localStorage.setItem('demivenInventory', JSON.stringify(this.inventory));
+            },
 
-            const saveInventory = () => {
-                localStorage.setItem('demivenInventory', JSON.stringify(inventory));
-            };
-            
-            const showToast = (message, isError = false) => {
-                toastMessage.innerHTML = message; 
-                toast.classList.remove('hidden');
-                toast.classList.toggle('bg-red-600', isError);
-                toast.classList.toggle('bg-gray-800', !isError);
-                setTimeout(() => toast.classList.add('hidden'), 4000);
-            };
+            getItem(id) {
+                return this.inventory.find(i => i.id === id);
+            },
 
-            const renderInventory = () => {
-                inventoryTableBody.innerHTML = '';
-                if (inventory.length === 0) {
-                    emptyState.classList.remove('hidden');
-                } else {
-                    emptyState.classList.add('hidden');
-                }
+            updateStock(id, qty, type) {
+                const item = this.getItem(id);
+                if (type === 'entrada') item.quantity += qty;
+                if (type === 'salida') item.quantity -= qty;
+                this.save();
+            }
+        };
 
-                inventory.sort((a, b) => a.code.localeCompare(b.code)).forEach(item => {
-                    const lowStock = item.reorderPoint && item.quantity <= item.reorderPoint;
-                    const row = document.createElement('tr');
-                    row.className = `bg-white border-b ${lowStock ? 'bg-amber-50' : ''}`;
-                    row.innerHTML = `
-                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap text-xs md:text-sm">${item.code}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-semibold text-xs md:text-sm">${item.description}</div>
-                            ${lowStock ? `<div class="text-[10px] text-red-600 font-bold">STOCK BAJO</div>` : ''}
-                        </td>
-                        <td class="px-6 py-4 text-center font-mono text-sm md:text-lg">${parseFloat(item.quantity).toLocaleString('es-VE')}</td>
-                        <td class="px-6 py-4 text-xs md:text-sm">${item.unit}</td>
-                        <td class="px-6 py-4">
-                            <div class="flex flex-col md:flex-row justify-center items-center gap-2">
-                                <div class="flex gap-2">
-                                    <button data-id="${item.id}" class="btn-entrada bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded-md text-[10px]">Entrada</button>
-                                    <button data-id="${item.id}" class="btn-salida bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded-md text-[10px]">Salida</button>
-                                </div>
-                                <div class="flex gap-3 mt-1 md:mt-0">
-                                    <button data-id="${item.id}" class="btn-editar text-blue-600 hover:text-blue-800 p-1" title="Editar">
-                                        <i data-lucide="edit" class="w-5 h-5"></i>
-                                    </button>
-                                    <button data-id="${item.id}" class="btn-eliminar text-gray-400 hover:text-red-600 p-1" title="Eliminar">
-                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </td>
-                    `;
-                    inventoryTableBody.appendChild(row);
-                });
-
-                // RE-INICIALIZAR ICONOS DESPUÉS DE RENDERIZAR LA TABLA
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-            };
-
-            // --- LÓGICA DE MODALES Y FORMULARIOS (Igual a la versión anterior pero asegurando integración) ---
-            const itemModal = document.getElementById('item-modal');
-            const itemForm = document.getElementById('item-form');
-            const transactionModal = document.getElementById('transaction-modal');
-            const transactionForm = document.getElementById('transaction-form');
-
-            const openItemModal = (item = null) => {
-                itemForm.reset();
-                if (item) {
-                    document.getElementById('modal-title').innerHTML = 'Editar &Iacute;tem';
-                    document.getElementById('item-id').value = item.id;
-                    document.getElementById('item-code').value = item.code;
-                    document.getElementById('item-description').value = item.description;
-                    document.getElementById('item-quantity').value = item.quantity;
-                    document.getElementById('item-quantity').disabled = true;
-                    document.getElementById('item-unit').value = item.unit;
-                    document.getElementById('item-reorder-point').value = item.reorderPoint || '';
-                } else {
-                    document.getElementById('modal-title').innerHTML = 'A&ntilde;adir Nuevo &Iacute;tem';
-                    document.getElementById('item-id').value = '';
-                    document.getElementById('item-quantity').disabled = false;
-                }
-                itemModal.classList.remove('hidden');
-            };
-
-            // Eventos de botones de la tabla
-            inventoryTableBody.addEventListener('click', (e) => {
-                const button = e.target.closest('button');
-                if (!button) return;
-                const id = button.dataset.id;
-                const item = inventory.find(i => i.id === id);
+        /** * MÓDULO: UI / RENDERIZADO
+         * En una app profesional esto iría en 'ui.js'
+         */
+        const UI = {
+            renderTable() {
+                const container = document.getElementById('inventoryBody');
+                container.innerHTML = '';
                 
-                if (button.classList.contains('btn-editar')) {
-                    openItemModal(item);
-                } else if (button.classList.contains('btn-eliminar')) {
-                    if (confirm(`¿Eliminar permanentemente: ${item.code} - ${item.description}?`)) {
-                        inventory = inventory.filter(i => i.id !== id);
-                        saveInventory();
-                        renderInventory();
-                        showToast('&Iacute;tem eliminado.', true);
-                    }
-                } else if (button.classList.contains('btn-entrada')) {
-                    // Lógica de modal de entrada...
-                    document.getElementById('transaction-item-id').value = id;
-                    document.getElementById('transaction-type').value = 'entrada';
-                    document.getElementById('transaction-modal-title').innerText = 'Registrar Entrada';
-                    document.getElementById('transaction-fields-entrada').classList.remove('hidden');
-                    document.getElementById('transaction-fields-salida').classList.add('hidden');
-                    transactionModal.classList.remove('hidden');
-                } else if (button.classList.contains('btn-salida')) {
-                    // Lógica de modal de salida...
-                    document.getElementById('transaction-item-id').value = id;
-                    document.getElementById('transaction-type').value = 'salida';
-                    document.getElementById('transaction-modal-title').innerText = 'Nota de Entrega';
-                    document.getElementById('transaction-fields-salida').classList.remove('hidden');
-                    document.getElementById('transaction-fields-entrada').classList.add('hidden');
-                    transactionModal.classList.remove('hidden');
-                }
-            });
-
-            // Botón añadir nuevo
-            document.getElementById('addNewItemBtn').onclick = () => openItemModal();
-            document.getElementById('cancel-item-btn').onclick = () => itemModal.classList.add('hidden');
-            document.getElementById('cancel-transaction-btn').onclick = () => transactionModal.classList.add('hidden');
-
-            itemForm.onsubmit = (e) => {
-                e.preventDefault();
-                const id = document.getElementById('item-id').value;
-                const code = document.getElementById('item-code').value.toUpperCase();
-                
-                if (id) {
-                    const item = inventory.find(i => i.id === id);
-                    item.code = code;
-                    item.description = document.getElementById('item-description').value;
-                    item.unit = document.getElementById('item-unit').value;
-                    item.reorderPoint = parseFloat(document.getElementById('item-reorder-point').value);
-                } else {
-                    inventory.push({
-                        id: 'ITEM-' + Date.now(),
-                        code,
-                        description: document.getElementById('item-description').value,
-                        quantity: parseFloat(document.getElementById('item-quantity').value),
-                        unit: document.getElementById('item-unit').value,
-                        reorderPoint: parseFloat(document.getElementById('item-reorder-point').value)
-                    });
-                }
-                saveInventory();
-                renderInventory();
-                itemModal.classList.add('hidden');
-                showToast('Guardado con &eacute;xito.');
-            };
-
-            transactionForm.onsubmit = (e) => {
-                e.preventDefault();
-                const id = document.getElementById('transaction-item-id').value;
-                const type = document.getElementById('transaction-type').value;
-                const qty = parseFloat(document.getElementById('transaction-quantity').value);
-                const item = inventory.find(i => i.id === id);
-
-                if (type === 'salida' && qty > item.quantity) {
-                    showToast('Stock insuficiente', true);
+                if (State.inventory.length === 0) {
+                    document.getElementById('emptyState').classList.remove('hidden');
                     return;
                 }
+                document.getElementById('emptyState').classList.add('hidden');
 
-                item.quantity = type === 'entrada' ? item.quantity + qty : item.quantity - qty;
-                saveInventory();
-                renderInventory();
-                transactionModal.classList.add('hidden');
-                showToast('Operaci&oacute;n registrada.');
-            };
+                State.inventory.sort((a,b) => a.code.localeCompare(b.code)).forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = `cursor-pointer hover:bg-slate-50 transition-all ${State.selectedId === item.id ? 'selected-row' : ''}`;
+                    row.onclick = () => Actions.selectItem(item.id);
+                    
+                    const isLow = item.reorderPoint && item.quantity <= item.reorderPoint;
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 font-mono text-xs font-bold text-slate-600">${item.code}</td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-semibold">${item.description}</div>
+                            ${isLow ? '<span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">REORDEN</span>' : ''}
+                        </td>
+                        <td class="px-6 py-4 text-right font-mono text-sm ${isLow ? 'text-red-600 font-bold' : 'text-slate-700'}">
+                            ${parseFloat(item.quantity).toLocaleString('es-VE')}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-400 font-medium">${item.unit}</td>
+                    `;
+                    container.appendChild(row);
+                });
+                lucide.createIcons();
+            },
 
-            // Exportar
-            document.getElementById('exportDataBtn').onclick = () => {
-                const data = `const initialDepartmentInventory = ${JSON.stringify(inventory, null, 2)};`;
-                document.getElementById('export-data-textarea').value = data;
-                document.getElementById('export-modal').classList.remove('hidden');
-            };
-            document.getElementById('cancel-export-btn').onclick = () => document.getElementById('export-modal').classList.add('hidden');
-            document.getElementById('copy-export-btn').onclick = () => {
-                document.getElementById('export-data-textarea').select();
-                document.execCommand('copy');
-                showToast('Copiado al portapapeles');
-            };
+            toggleSidebar(show) {
+                const sidebar = document.getElementById('actionSidebar');
+                if (show) {
+                    sidebar.classList.remove('hidden');
+                } else {
+                    sidebar.classList.add('hidden');
+                    State.selectedId = null;
+                    this.renderTable();
+                }
+            },
 
-            renderInventory();
-        });
+            updateSidebarInfo(item) {
+                document.getElementById('sideCode').innerText = item.code;
+                document.getElementById('sideDesc').innerText = item.description;
+            }
+        };
+
+        /** * MÓDULO: ACCIONES / LÓGICA DE NEGOCIO
+         * En una app profesional esto iría en 'actions.js'
+         */
+        const Actions = {
+            selectItem(id) {
+                State.selectedId = id;
+                const item = State.getItem(id);
+                UI.updateSidebarInfo(item);
+                UI.toggleSidebar(true);
+                UI.renderTable();
+            },
+
+            handleGlobalAction(type) {
+                const item = State.getItem(State.selectedId);
+                const modal = document.getElementById('globalModal');
+                const content = document.getElementById('modalContent');
+                
+                let html = '';
+                
+                switch(type) {
+                    case 'entrada':
+                    case 'salida':
+                        html = `
+                            <h2 class="text-xl font-bold mb-2">${type === 'entrada' ? 'Entrada' : 'Salida'} de Material</h2>
+                            <p class="text-sm text-slate-500 mb-6">${item.description}</p>
+                            <form onsubmit="event.preventDefault(); submitTransaction('${type}')" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Cantidad (${item.unit})</label>
+                                    <input type="number" id="m_qty" step="any" required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Autorizado por</label>
+                                    <input type="text" id="m_auth" required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <div class="flex gap-2 pt-4">
+                                    <button type="button" onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold">Cancelar</button>
+                                    <button type="submit" class="flex-1 py-3 bg-blue-800 text-white rounded-xl font-bold">Confirmar</button>
+                                </div>
+                            </form>
+                        `;
+                        break;
+                    
+                    case 'edit':
+                        html = `
+                            <h2 class="text-xl font-bold mb-6">Editar Producto</h2>
+                            <form onsubmit="event.preventDefault(); submitEdit()" class="space-y-4">
+                                <input type="hidden" id="m_id" value="${item.id}">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Código</label>
+                                    <input type="text" id="m_code" value="${item.code}" required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Descripción</label>
+                                    <textarea id="m_desc" required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">${item.description}</textarea>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Unidad</label>
+                                        <input type="text" id="m_unit" value="${item.unit}" required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Reorden</label>
+                                        <input type="number" id="m_reorder" value="${item.reorderPoint}" class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 pt-4">
+                                    <button type="button" onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold">Cerrar</button>
+                                    <button type="submit" class="flex-1 py-3 bg-blue-800 text-white rounded-xl font-bold">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        `;
+                        break;
+
+                    case 'delete':
+                        if (confirm(`¿Estás seguro de eliminar permanentemente ${item.code}?`)) {
+                            State.inventory = State.inventory.filter(i => i.id !== item.id);
+                            State.save();
+                            UI.toggleSidebar(false);
+                            UI.renderTable();
+                        }
+                        return;
+                }
+                
+                if (html) {
+                    content.innerHTML = html;
+                    modal.classList.remove('hidden');
+                }
+            },
+
+            addNew() {
+                const modal = document.getElementById('globalModal');
+                const content = document.getElementById('modalContent');
+                content.innerHTML = `
+                    <h2 class="text-xl font-bold mb-6">Nuevo Producto</h2>
+                    <form onsubmit="event.preventDefault(); submitNew()" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Código</label>
+                                <input type="text" id="m_code" required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Existencia Inicial</label>
+                                <input type="number" id="m_qty" value="0" step="any" required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Descripción</label>
+                            <textarea id="m_desc" required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Unidad</label>
+                                <input type="text" id="m_unit" placeholder="Pza, Kg..." required class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Punto Reorden</label>
+                                <input type="number" id="m_reorder" value="0" class="w-full border-slate-200 rounded-lg p-3 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        <div class="flex gap-2 pt-4">
+                            <button type="button" onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold">Cancelar</button>
+                            <button type="submit" class="flex-1 py-3 bg-blue-800 text-white rounded-xl font-bold">Crear Producto</button>
+                        </div>
+                    </form>
+                `;
+                modal.classList.remove('hidden');
+            }
+        };
+
+        /** * MÓDULO: CONTROLADORES GLOBALES
+         * Estas funciones conectan la UI con las acciones
+         */
+        window.handleAction = (type) => Actions.handleGlobalAction(type);
+        window.closeModal = () => document.getElementById('globalModal').classList.add('hidden');
+        
+        window.submitTransaction = (type) => {
+            const qty = parseFloat(document.getElementById('m_qty').value);
+            const item = State.getItem(State.selectedId);
+            
+            if (type === 'salida' && qty > item.quantity) {
+                alert('No hay stock suficiente');
+                return;
+            }
+            
+            State.updateStock(State.selectedId, qty, type);
+            closeModal();
+            UI.renderTable();
+        };
+
+        window.submitEdit = () => {
+            const item = State.getItem(State.selectedId);
+            item.code = document.getElementById('m_code').value.toUpperCase();
+            item.description = document.getElementById('m_desc').value;
+            item.unit = document.getElementById('m_unit').value;
+            item.reorderPoint = parseFloat(document.getElementById('m_reorder').value);
+            State.save();
+            closeModal();
+            UI.updateSidebarInfo(item);
+            UI.renderTable();
+        };
+
+        window.submitNew = () => {
+            const newItem = {
+                id: 'ID-' + Date.now(),
+                code: document.getElementById('m_code').value.toUpperCase(),
+                description: document.getElementById('m_desc').value,
+                quantity: parseFloat(document.getElementById('m_qty').value),
+                unit: document.getElementById('m_unit').value,
+                reorderPoint: parseFloat(document.getElementById('m_reorder').value)
+            };
+            State.inventory.push(newItem);
+            State.save();
+            closeModal();
+            UI.renderTable();
+        };
+
+        // Iniciar
+        document.getElementById('closeSidebar').onclick = () => UI.toggleSidebar(false);
+        document.getElementById('addNewBtn').onclick = () => Actions.addNew();
+        document.getElementById('exportBtn').onclick = () => {
+            const data = `const initialDepartmentInventory = ${JSON.stringify(State.inventory, null, 2)};`;
+            const blob = new Blob([data], {type: 'text/javascript'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'inventario_data.js';
+            a.click();
+        };
+
+        UI.renderTable();
     </script>
 </body>
 </html>
